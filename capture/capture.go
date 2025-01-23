@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -84,27 +83,51 @@ func (c *Capture) isMediaFile(f string) bool {
 
 /* 读取文件列表,含识别番号的过程，返回一个文件上下文列表。*/
 func (c *Capture) readFileList() ([]*model.FileContext, error) {
+
+	fm := utils.NewFileManager()
 	fcs := make([]*model.FileContext, 0, 20)
-	err := filepath.Walk(c.c.ScanDir, func(path string, info fs.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if info.IsDir() {
-			return nil
-		}
-		if !c.isMediaFile(path) {
-			return nil
-		}
-		fc := &model.FileContext{FullFilePath: path}
-		// 通过路径文件名 识别电影 信息
-		if err := c.resolveFileInfo(fc, path); err != nil {
-			return err
-		}
-		fcs = append(fcs, fc)
-		return nil
-	})
+	entries, err := fm.ReadDirSafely(c.c.ScanDir)
 	if err != nil {
 		return nil, err
+	}
+	for _, entry := range entries {
+		fullPath := filepath.Join(c.c.ScanDir, entry.Name())
+		// 处理文件名编码
+		normalizedPath := fm.NormalizePathForPlatform(fullPath)
+
+		// 检查是否目录
+		isDir, err := fm.IsDir(normalizedPath)
+		if err != nil {
+			return nil, err
+		}
+		if isDir {
+			continue
+		}
+		// 检查是否媒体文件
+		isExist, err := fm.IsExist(normalizedPath)
+		if err != nil {
+			return nil, err
+		}
+
+		if !c.isMediaFile(normalizedPath) {
+			continue
+		}
+		if !isExist {
+			// 1. 文件确实不存在了(曾经存在)
+			// 2. 文件存在,但是程序无法读取,测试出现过Mac NFS挂载的文件日文能看到,但是无法打开(识别),必须手动重命名后才能打开
+			debugLogger.Shared().Error("程序文件无法识别该文件,请检查文件是否存在,如存在请手动命名再试", zap.String("file", normalizedPath))
+			continue
+		}
+		fc := &model.FileContext{FullFilePath: normalizedPath}
+		// 通过路径文件名 识别电影 信息
+		if err := c.resolveFileInfo(fc, normalizedPath); err != nil {
+			return nil, err
+		}
+		fcs = append(fcs, fc)
+	}
+	if len(fcs) == 0 {
+		return nil, fmt.Errorf("no valid files found in directory: %s", c.c.ScanDir)
+
 	}
 
 	return fcs, nil
@@ -118,18 +141,18 @@ func (c *Capture) Run(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("read file list failed, err:%w", err)
 	}
-	debugLogger.Shared().Debugw("start read local file!⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️")
+	debugLogger.Shared().Sugar().Debugf("start read local file!⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️")
 	// 扫描本地文件路径视频以获取文件基础信息
 	c.displayNumberInfo(ctx, fcs)
-	debugLogger.Shared().Debugw("finish read local file success!⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️")
+	debugLogger.Shared().Sugar().Debugf("finish read local file success!⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️")
 	// TODO 处理文件列表
-	debugLogger.Shared().Debugw("start process file!⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️")
+	debugLogger.Shared().Sugar().Debugf("start process file!⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️")
 
 	if err := c.processFileList(ctx, fcs); err != nil {
-		debugLogger.Shared().Debugw("failed process file !⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️")
+		debugLogger.Shared().Sugar().Debugf("failed process file !⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️")
 		return fmt.Errorf("proc file list failed, err:%w", err)
 	} else {
-		debugLogger.Shared().Debugw("finish process file !⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️")
+		debugLogger.Shared().Sugar().Debugf("finish process file !⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️")
 	}
 
 	return nil
@@ -389,7 +412,7 @@ func (c *Capture) moveMovieByLink(_ *model.FileContext, src, dst string) error {
 }
 
 func (c *Capture) moveMovieDirect(_ *model.FileContext, src, dst string) error {
-	return utils.Move(src, dst)
+	return utils.NewFileManager().Move(src, dst)
 }
 
 func (c *Capture) exportNFOData(fc *model.FileContext) error {

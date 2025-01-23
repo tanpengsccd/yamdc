@@ -1,12 +1,12 @@
 package config
 
 import (
+	"encoding/json"
 	"errors"
 	"flag"
 	"os"
 	"sync"
 
-	"github.com/marcozac/go-jsonc"
 	"github.com/tailscale/hujson"
 	"github.com/xxxsen/common/logger"
 )
@@ -38,21 +38,20 @@ type NetworkConfig struct {
 }
 
 type Config struct {
-	ScanDir         string                 `json:"scan_dir"`
-	SaveDir         string                 `json:"save_dir"`
-	DataDir         string                 `json:"data_dir"`
-	Naming          string                 `json:"naming"`
-	PluginConfig    map[string]interface{} `json:"plugin_config"`
-	HandlerConfig   map[string]interface{} `json:"handler_config"`
-	Plugins         []string               `json:"plugins"`
-	CategoryPlugins []CategoryPlugin       `json:"category_plugins"`
-	Handlers        []string               `json:"handlers"`
-	ExtraMediaExts  []string               `json:"extra_media_exts"`
-	LogConfig       logger.LogConfig       `json:"log_config"`
-	Dependencies    []Dependency           `json:"dependencies"`
-	NetworkConfig   NetworkConfig          `json:"network_config"`
-	//在提取number前,需要忽略的正则,即匹配到了就会先将其移除后才会去匹配,比如一些广告字段或者域名
-	RegexesToReplace [][]string `json:"regexes_to_replace"`
+	ScanDir          string                 `json:"scan_dir"`
+	SaveDir          string                 `json:"save_dir"`
+	DataDir          string                 `json:"data_dir"`
+	Naming           string                 `json:"naming"`
+	PluginConfig     map[string]interface{} `json:"plugin_config"`
+	HandlerConfig    map[string]interface{} `json:"handler_config"`
+	Plugins          []string               `json:"plugins"`
+	CategoryPlugins  []CategoryPlugin       `json:"category_plugins"`
+	Handlers         []string               `json:"handlers"`
+	ExtraMediaExts   []string               `json:"extra_media_exts"`
+	LogConfig        logger.LogConfig       `json:"log_config"`
+	Dependencies     []Dependency           `json:"dependencies"`
+	NetworkConfig    NetworkConfig          `json:"network_config"`
+	RegexesToReplace [][]string             `json:"regexes_to_replace"` //在提取number前,需要忽略的正则,即匹配到了就会先将其移除后才会去匹配,比如一些广告字段或者域名
 }
 
 func defaultConfig() *Config {
@@ -108,16 +107,11 @@ func Parse(f string) (*Config, error) {
 		return nil, err
 	}
 	c := defaultConfig()
-	if err := jsonc.Unmarshal(raw, c); err != nil {
+	if err := json.Unmarshal(raw, c); err != nil {
 		return nil, err
 	}
 	return c, nil
 }
-
-// Init 初始化全局配置
-// func init() {
-
-// }
 
 // Shared 获取全局配置实例
 func Shared() *Config {

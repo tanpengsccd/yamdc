@@ -9,6 +9,7 @@ import (
 	"yamdc/capture"
 	"yamdc/client"
 	"yamdc/config"
+	"yamdc/debugLogger"
 	"yamdc/dependency"
 	"yamdc/envflag"
 	"yamdc/face"
@@ -23,7 +24,6 @@ import (
 	"yamdc/translator"
 	"yamdc/translator/googletranslator"
 
-	"github.com/xxxsen/common/logger"
 	"github.com/xxxsen/common/logutil"
 	"go.uber.org/zap"
 
@@ -33,9 +33,8 @@ import (
 
 func main() {
 
+	logkit := debugLogger.Shared()
 	c := config.Shared()
-
-	logkit := logger.Init(c.LogConfig.File, c.LogConfig.Level, int(c.LogConfig.FileCount), int(c.LogConfig.FileSize), int(c.LogConfig.KeepDays), c.LogConfig.Console)
 	if err := precheckDir(c); err != nil {
 		logkit.Fatal("precheck dir failed", zap.Error(err))
 	}
