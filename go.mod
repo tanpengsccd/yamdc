@@ -1,8 +1,6 @@
 module yamdc
 
-go 1.22.0
-
-toolchain go1.22.4
+go 1.23
 
 require (
 	github.com/Conight/go-googletrans v0.2.4
@@ -14,19 +12,12 @@ require (
 	github.com/imroc/req/v3 v3.48.0
 	github.com/samber/lo v1.47.0
 	github.com/stretchr/testify v1.9.0
+	github.com/tailscale/hujson v0.0.0-20241010212012-29efb4a0184b
 	github.com/xxxsen/common v0.1.13
 	go.uber.org/zap v1.23.0
 	golang.org/x/image v0.18.0
 	golang.org/x/net v0.33.0
 	golang.org/x/text v0.21.0
-)
-
-require (
-	github.com/goccy/go-json v0.10.2 // indirect
-	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/mitchellh/mapstructure v1.5.0 // indirect
-	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
-	github.com/modern-go/reflect2 v1.0.2 // indirect
 )
 
 require (
@@ -45,6 +36,7 @@ require (
 	github.com/klauspost/compress v1.17.9
 	github.com/marcozac/go-jsonc v0.1.1
 	github.com/mattn/go-isatty v0.0.20 // indirect
+	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/onsi/ginkgo/v2 v2.20.2 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/quic-go/qpack v0.5.1 // indirect

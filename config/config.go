@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/marcozac/go-jsonc"
+	"github.com/tailscale/hujson"
 	"github.com/xxxsen/common/logger"
 )
 
@@ -99,6 +100,10 @@ func defaultConfig() *Config {
 
 func Parse(f string) (*Config, error) {
 	raw, err := os.ReadFile(f)
+	if err != nil {
+		return nil, err
+	}
+	raw, err = hujson.Standardize(raw)
 	if err != nil {
 		return nil, err
 	}
