@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 	"yamdc/model"
-	"yamdc/number"
+
 	"yamdc/searcher/decoder"
 	"yamdc/searcher/parser"
 	"yamdc/searcher/plugin/api"
@@ -20,7 +20,7 @@ type av18 struct {
 	api.DefaultPlugin
 }
 
-func (p *av18) OnMakeHTTPRequest(ctx context.Context, number *number.Number) (*http.Request, error) {
+func (p *av18) OnMakeHTTPRequest(ctx context.Context, number *model.Number) (*http.Request, error) {
 	uri := fmt.Sprintf("https://18av.me/cn/search.php?kw_type=key&kw=%s", number.GetNumberID())
 	return http.NewRequest(http.MethodGet, uri, nil)
 }

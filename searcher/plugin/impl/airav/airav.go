@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 	"yamdc/model"
-	"yamdc/number"
+
 	"yamdc/searcher/parser"
 	"yamdc/searcher/plugin/api"
 	"yamdc/searcher/plugin/constant"
@@ -21,7 +21,7 @@ type airav struct {
 	api.DefaultPlugin
 }
 
-func (p *airav) OnMakeHTTPRequest(ctx context.Context, number *number.Number) (*http.Request, error) {
+func (p *airav) OnMakeHTTPRequest(ctx context.Context, number *model.Number) (*http.Request, error) {
 	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("https://www.airav.wiki/api/video/barcode/%s?lng=zh-TW", number.GetNumberID()), nil)
 	if err != nil {
 		return nil, err

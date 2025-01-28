@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"net/http"
 	"yamdc/model"
-	"yamdc/number"
+
+	"yamdc/number_parser"
+
 	"yamdc/searcher/decoder"
 	"yamdc/searcher/parser"
 	"yamdc/searcher/plugin/api"
@@ -20,7 +22,7 @@ type javdb struct {
 	api.DefaultPlugin
 }
 
-func (p *javdb) OnMakeHTTPRequest(ctx context.Context, number *number.Number) (*http.Request, error) {
+func (p *javdb) OnMakeHTTPRequest(ctx context.Context, number *model.Number) (*http.Request, error) {
 	link := fmt.Sprintf("https://javdb.com/search?q=%s&f=all", number.GetNumberID())
 	return http.NewRequest(http.MethodGet, link, nil)
 }
@@ -40,10 +42,10 @@ func (p *javdb) OnHandleHTTPRequest(ctx context.Context, invoker api.HTTPInvoker
 		LinkSelector: func(ps []*twostep.XPathPair) (string, bool, error) {
 			linklist := ps[0].Result
 			numberlist := ps[1].Result
-			num := number.GetCleanID(meta.GetNumberId(ctx))
+			num := number_parser.GetCleanID(meta.GetNumberId(ctx))
 			for idx, numberItem := range numberlist {
 				link := linklist[idx]
-				if number.GetCleanID(numberItem) == num {
+				if number_parser.GetCleanID(numberItem) == num {
 					return link, true, nil
 				}
 			}

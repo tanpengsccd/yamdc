@@ -1,6 +1,8 @@
 package config
 
 import (
+	"errors"
+	"flag"
 	"os"
 	"sync"
 
@@ -24,22 +26,20 @@ type Dependency struct {
 }
 
 type Config struct {
-
-	ScanDir         string                 `json:"scan_dir"`
-	SaveDir         string                 `json:"save_dir"`
-	DataDir         string                 `json:"data_dir"`
-	Naming          string                 `json:"naming"`
-  //在提取number前,需要忽略的正则,即匹配到了就会先将其移除后才会去匹配,比如一些广告字段或者域名
+	ScanDir string `json:"scan_dir"`
+	SaveDir string `json:"save_dir"`
+	DataDir string `json:"data_dir"`
+	Naming  string `json:"naming"`
+	//在提取number前,需要忽略的正则,即匹配到了就会先将其移除后才会去匹配,比如一些广告字段或者域名
 	RegexesToReplace [][]string             `json:"regexes_to_replace"`
-	PluginConfig    map[string]interface{} `json:"plugin_config"`
-	HandlerConfig   map[string]interface{} `json:"handler_config"`
-	Plugins         []string               `json:"plugins"`
-	CategoryPlugins []CategoryPlugin       `json:"category_plugins"`
-	Handlers        []string               `json:"handlers"`
-	ExtraMediaExts  []string               `json:"extra_media_exts"`
-	LogConfig       logger.LogConfig       `json:"log_config"`
-	Dependencies    []Dependency           `json:"dependencies"`
-
+	PluginConfig     map[string]interface{} `json:"plugin_config"`
+	HandlerConfig    map[string]interface{} `json:"handler_config"`
+	Plugins          []string               `json:"plugins"`
+	CategoryPlugins  []CategoryPlugin       `json:"category_plugins"`
+	Handlers         []string               `json:"handlers"`
+	ExtraMediaExts   []string               `json:"extra_media_exts"`
+	LogConfig        logger.LogConfig       `json:"log_config"`
+	Dependencies     []Dependency           `json:"dependencies"`
 }
 
 func defaultConfig() *Config {
@@ -98,15 +98,20 @@ func Parse(f string) (*Config, error) {
 }
 
 // Init 初始化全局配置
-func Init(configFile string) error {
-	var err error
-	once.Do(func() {
-		globalConfig, err = Parse(configFile)
-	})
-	return err
-}
+// func init() {
 
-// GetConfig 获取全局配置实例
-func GetConfig() *Config {
+// }
+
+// Shared 获取全局配置实例
+func Shared() *Config {
+	once.Do(func() {
+		var err error
+		conf := flag.String("config", "./config.json", "config file")
+		flag.Parse()
+		globalConfig, err = Parse(*conf)
+		if err != nil {
+			panic(errors.New("parse config failed, err:" + err.Error()))
+		}
+	})
 	return globalConfig
 }

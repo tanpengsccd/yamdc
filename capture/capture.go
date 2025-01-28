@@ -9,10 +9,11 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"yamdc/debugLogger"
 	"yamdc/envflag"
 	"yamdc/model"
 	"yamdc/nfo"
-	"yamdc/number"
+	"yamdc/number_parser"
 	"yamdc/processor"
 	"yamdc/store"
 	"yamdc/utils"
@@ -57,15 +58,18 @@ func New(opts ...Option) (*Capture, error) {
 	return &Capture{c: c, extMap: utils.StringListToSet(utils.StringListToLower(append(c.ExtraMediaExtList, defaultMediaSuffix...)))}, nil
 }
 
+/* 通过路径文件名 识别电影 信息:电影名,分集数,内嵌中文字幕 等  */
 func (c *Capture) resolveFileInfo(fc *model.FileContext, file string) error {
 	fc.FileName = filepath.Base(file)
 	fc.FileExt = filepath.Ext(file)
 	fileNoExt := fc.FileName[:len(fc.FileName)-len(fc.FileExt)]
-	info, err := number.Parse(fileNoExt)
+
+	// 通过文件名 识别 电影信息 过程
+	numberInfo, err := number_parser.Parse(fileNoExt)
 	if err != nil {
 		return fmt.Errorf("parse number failed, err:%w", err)
 	}
-	fc.Number = info
+	fc.Number = numberInfo
 	fc.SaveFileBase = fc.Number.GenerateFileName()
 	return nil
 }
@@ -78,6 +82,7 @@ func (c *Capture) isMediaFile(f string) bool {
 	return false
 }
 
+/* 读取文件列表,含识别番号的过程，返回一个文件上下文列表。*/
 func (c *Capture) readFileList() ([]*model.FileContext, error) {
 	fcs := make([]*model.FileContext, 0, 20)
 	err := filepath.Walk(c.c.ScanDir, func(path string, info fs.FileInfo, err error) error {
@@ -91,6 +96,7 @@ func (c *Capture) readFileList() ([]*model.FileContext, error) {
 			return nil
 		}
 		fc := &model.FileContext{FullFilePath: path}
+		// 通过路径文件名 识别电影 信息
 		if err := c.resolveFileInfo(fc, path); err != nil {
 			return err
 		}
@@ -100,31 +106,72 @@ func (c *Capture) readFileList() ([]*model.FileContext, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return fcs, nil
 }
 
+// Run 执行捕获过程，主要负责读取文件列表、展示数字信息和处理文件列表。
+// 该函数接收一个 context.Context 类型的参数 ctx，用于控制操作的取消或超时。
 func (c *Capture) Run(ctx context.Context) error {
+	// 读取文件列表，如果读取失败，则返回错误信息。
 	fcs, err := c.readFileList()
 	if err != nil {
 		return fmt.Errorf("read file list failed, err:%w", err)
 	}
+	debugLogger.Shared().Debugw("start read local file!⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️")
+	// 扫描本地文件路径视频以获取文件基础信息
 	c.displayNumberInfo(ctx, fcs)
+	debugLogger.Shared().Debugw("finish read local file success!⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️")
+	// TODO 处理文件列表
+	debugLogger.Shared().Debugw("start process file!⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️")
+
 	if err := c.processFileList(ctx, fcs); err != nil {
+		debugLogger.Shared().Debugw("failed process file !⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️")
 		return fmt.Errorf("proc file list failed, err:%w", err)
+	} else {
+		debugLogger.Shared().Debugw("finish process file !⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️⬆️")
 	}
+
 	return nil
 }
 
+// CondString 当 value 非空时返回 zap.String，否则返回 zap.Skip()
+func CondString(key, value string) zap.Field {
+	if value == "" {
+		return zap.Skip()
+	} else {
+		return zap.String(key, value)
+	}
+
+}
+func CondBool(key string, value bool, trueString string) zap.Field {
+	if !value {
+		return zap.Skip()
+	} else {
+		return zap.String(key, trueString)
+	}
+
+}
 func (c *Capture) displayNumberInfo(ctx context.Context, fcs []*model.FileContext) {
-	logutil.GetLogger(ctx).Info("read movie file succ", zap.Int("count", len(fcs)))
+	logutil.GetLogger(ctx).Info("read local movie file success! 💼--------------------------------------------------", zap.Int("count", len(fcs)))
 	for _, item := range fcs {
+		// 打印文件信息, 只打印item.Number 为true的信息,或者有的信息
 		logutil.GetLogger(ctx).Info("file info",
-			zap.String("number", item.Number.GetNumberID()),
-			zap.Bool("multi_cd", item.Number.GetIsMultiCD()),
-			zap.Int("cd", item.Number.GetMultiCDIndex()), zap.String("file", item.FileName))
+			CondString("number", item.Number.NumberId),
+			CondString("ep", item.Number.Episode),
+			CondBool("cnsub", item.Number.IsCnSub, "🀄️"),
+			CondBool("uncensored", item.Number.IsUncensored, "🔳"),
+			CondBool("4k", item.Number.Is4k, "📺"),
+			CondBool("cracked", item.Number.IsCracked, "🔓"),
+			CondBool("leaked", item.Number.IsLeaked, "💧"),
+			CondString("cat", item.Number.Cat.String()),
+			zap.String("file", item.FileName),
+		)
+
 	}
 }
 
+// 刮削提取的文件信息
 func (c *Capture) processFileList(ctx context.Context, fcs []*model.FileContext) error {
 	var outErr error
 	for _, item := range fcs {
@@ -321,6 +368,10 @@ func (c *Capture) saveMediaData(ctx context.Context, fc *model.FileContext) erro
 }
 
 func (c *Capture) moveMovie(fc *model.FileContext, src string, dst string) error {
+	// 暂时不移动, 打印 移动
+	//TODO: 暂时不移动, 打印 移动
+	// debugLogger.Shared().Debugw("🐛:move movie to dst dir", src, dst)
+	// return nil
 	if envflag.IsEnableLinkMode() {
 		return c.moveMovieByLink(fc, src, dst)
 	}

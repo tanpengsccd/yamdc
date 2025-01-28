@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 	"yamdc/model"
-	"yamdc/number"
+
 	"yamdc/searcher/decoder"
 	"yamdc/searcher/plugin/api"
 	"yamdc/searcher/plugin/constant"
@@ -27,7 +27,7 @@ type fc2 struct {
 	api.DefaultPlugin
 }
 
-func (p *fc2) OnMakeHTTPRequest(ctx context.Context, n *number.Number) (*http.Request, error) {
+func (p *fc2) OnMakeHTTPRequest(ctx context.Context, n *model.Number) (*http.Request, error) {
 	number := strings.ToLower(n.GetNumberID())
 	res := defaultFc2NumberParser.FindStringSubmatch(number)
 	if len(res) != 2 {

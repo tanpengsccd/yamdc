@@ -3,10 +3,9 @@ package searcher
 import (
 	"context"
 	"yamdc/model"
-	"yamdc/number"
 )
 
 type ISearcher interface {
 	Name() string
-	Search(ctx context.Context, number *number.Number) (*model.AvMeta, bool, error)
+	Search(ctx context.Context, number *model.Number) (*model.AvMeta, bool, error)
 }

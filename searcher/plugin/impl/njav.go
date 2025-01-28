@@ -6,7 +6,8 @@ import (
 	"net/http"
 	"strings"
 	"yamdc/model"
-	"yamdc/number"
+
+	"yamdc/number_parser"
 	"yamdc/searcher/decoder"
 	"yamdc/searcher/parser"
 	"yamdc/searcher/plugin/api"
@@ -20,7 +21,7 @@ type njav struct {
 	api.DefaultPlugin
 }
 
-func (p *njav) OnMakeHTTPRequest(ctx context.Context, number *number.Number) (*http.Request, error) {
+func (p *njav) OnMakeHTTPRequest(ctx context.Context, number *model.Number) (*http.Request, error) {
 	nid := number.GetNumberID()
 	nid = strings.ReplaceAll(nid, "_", "-") //将下划线替换为中划线
 	uri := fmt.Sprintf("https://njavtv.com/cn/search/%s", nid)
@@ -28,7 +29,7 @@ func (p *njav) OnMakeHTTPRequest(ctx context.Context, number *number.Number) (*h
 }
 
 func (p *njav) OnHandleHTTPRequest(ctx context.Context, invoker api.HTTPInvoker, req *http.Request) (*http.Response, error) {
-	cleanNumberId := strings.ToUpper(number.GetCleanID(meta.GetNumberId(ctx)))
+	cleanNumberId := strings.ToUpper(number_parser.GetCleanID(meta.GetNumberId(ctx)))
 	return twostep.HandleXPathTwoStepSearch(ctx, invoker, req, &twostep.XPathTwoStepContext{
 		Ps: []*twostep.XPathPair{
 			{
@@ -45,7 +46,7 @@ func (p *njav) OnHandleHTTPRequest(ctx context.Context, invoker api.HTTPInvoker,
 			titles := ps[1].Result
 			for i, link := range links {
 				title := titles[i]
-				title = strings.ToUpper(number.GetCleanID(title))
+				title = strings.ToUpper(number_parser.GetCleanID(title))
 				if strings.Contains(title, cleanNumberId) {
 					return link, true, nil
 				}

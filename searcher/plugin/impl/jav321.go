@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"yamdc/model"
-	"yamdc/number"
+
 	"yamdc/searcher/decoder"
 	"yamdc/searcher/parser"
 	"yamdc/searcher/plugin/api"
@@ -20,7 +20,7 @@ type jav321 struct {
 	api.DefaultPlugin
 }
 
-func (p *jav321) OnMakeHTTPRequest(ctx context.Context, number *number.Number) (*http.Request, error) {
+func (p *jav321) OnMakeHTTPRequest(ctx context.Context, number *model.Number) (*http.Request, error) {
 	data := url.Values{}
 	data.Set("sn", number.GetNumberID())
 	body := data.Encode()

@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 	"yamdc/model"
-	"yamdc/number"
+
 	"yamdc/searcher/decoder"
 	"yamdc/searcher/parser"
 	"yamdc/searcher/plugin/api"
@@ -20,7 +20,7 @@ type tktube struct {
 	api.DefaultPlugin
 }
 
-func (p *tktube) OnMakeHTTPRequest(ctx context.Context, n *number.Number) (*http.Request, error) {
+func (p *tktube) OnMakeHTTPRequest(ctx context.Context, n *model.Number) (*http.Request, error) {
 	nid := strings.ReplaceAll(n.GetNumberID(), "-", "--")
 	uri := fmt.Sprintf("https://tktube.com/zh/search/%s/", nid)
 	return http.NewRequest(http.MethodGet, uri, nil)

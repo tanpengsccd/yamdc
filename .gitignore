@@ -5,3 +5,5 @@ models/
 yamdc
 yamdc.log
 data/
+*.log
+.DS_Store

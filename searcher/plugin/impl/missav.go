@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strings"
 	"yamdc/model"
-	"yamdc/number"
 	"yamdc/searcher/decoder"
 	"yamdc/searcher/parser"
 	"yamdc/searcher/plugin/api"
@@ -26,7 +25,7 @@ type missav struct {
 	api.DefaultPlugin
 }
 
-func (p *missav) OnMakeHTTPRequest(ctx context.Context, number *number.Number) (*http.Request, error) {
+func (p *missav) OnMakeHTTPRequest(ctx context.Context, number *model.Number) (*http.Request, error) {
 	link := fmt.Sprintf("https://%s/cn/search/%s", api.MustSelectDomain(defaultMissavDomains), number.GetNumberID())
 	return http.NewRequest(http.MethodGet, link, nil)
 }

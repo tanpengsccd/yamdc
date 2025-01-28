@@ -2,11 +2,9 @@ package searcher
 
 import (
 	"context"
-	"yamdc/model"
-	"yamdc/number"
-
 	"github.com/xxxsen/common/logutil"
 	"go.uber.org/zap"
+	"yamdc/model"
 )
 
 type group struct {
@@ -20,11 +18,11 @@ func (g *group) Name() string {
 	return "group"
 }
 
-func (g *group) Search(ctx context.Context, number *number.Number) (*model.AvMeta, bool, error) {
+func (g *group) Search(ctx context.Context, number *model.Number) (*model.AvMeta, bool, error) {
 	return performGroupSearch(ctx, number, g.ss)
 }
 
-func performGroupSearch(ctx context.Context, number *number.Number, ss []ISearcher) (*model.AvMeta, bool, error) {
+func performGroupSearch(ctx context.Context, number *model.Number, ss []ISearcher) (*model.AvMeta, bool, error) {
 	var lastErr error
 	for _, s := range ss {
 		logutil.GetLogger(ctx).Debug("search number", zap.String("plugin", s.Name()))

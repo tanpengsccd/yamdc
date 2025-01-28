@@ -1,6 +1,9 @@
 package model
 
-import "yamdc/number"
+import (
+	"path/filepath"
+	"strings"
+)
 
 type AvMeta struct {
 	Number       string   `json:"number"`        //番号
@@ -52,5 +55,21 @@ type FileContext struct {
 	SaveFileBase string
 	SaveDir      string
 	Meta         *AvMeta
-	Number       *number.Number
+	Number       *Number
+}
+
+/* 返回当前文件的目录,入参为第几级目录,0为该文件当前目录,1为上一级 */
+func (f *FileContext) Dir(lv uint8) string {
+	dir := filepath.Dir(f.FullFilePath)
+	if lv == 0 {
+		return dir
+	}
+
+	parts := strings.Split(dir, string(filepath.Separator))
+	// 如果要获取的目录层级大于实际的层级,返回根目录
+	if int(lv) >= len(parts) {
+		return string(filepath.Separator)
+	}
+
+	return filepath.Join(parts[:len(parts)-int(lv)]...)
 }

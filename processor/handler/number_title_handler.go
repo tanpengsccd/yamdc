@@ -4,15 +4,15 @@ import (
 	"context"
 	"strings"
 	"yamdc/model"
-	"yamdc/number"
+	"yamdc/number_parser"
 )
 
 type numberTitleHandler struct {
 }
 
 func (h *numberTitleHandler) Handle(ctx context.Context, fc *model.FileContext) error {
-	title := number.GetCleanID(fc.Meta.Title)
-	num := number.GetCleanID(fc.Number.GetNumberID())
+	title := number_parser.GetCleanID(fc.Meta.Title)
+	num := number_parser.GetCleanID(fc.Number.GetNumberID())
 	if strings.Contains(title, num) {
 		return nil
 	}

@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 	"yamdc/model"
-	"yamdc/number"
+	"yamdc/number_parser"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -39,7 +39,7 @@ func TestTagPadde(t *testing.T) {
 		},
 	}
 	for _, item := range tsts {
-		num, err := number.Parse(item.in)
+		num, err := number_parser.Parse(item.in)
 		assert.NoError(t, err)
 		padder := &tagPadderHandler{}
 		fc := &model.FileContext{

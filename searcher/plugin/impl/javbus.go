@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"yamdc/model"
-	"yamdc/number"
+
 	"yamdc/searcher/decoder"
 	"yamdc/searcher/parser"
 	"yamdc/searcher/plugin/api"
@@ -22,7 +22,7 @@ type javbus struct {
 	api.DefaultPlugin
 }
 
-func (p *javbus) OnMakeHTTPRequest(ctx context.Context, number *number.Number) (*http.Request, error) {
+func (p *javbus) OnMakeHTTPRequest(ctx context.Context, number *model.Number) (*http.Request, error) {
 	url := fmt.Sprintf("https://%s/%s", api.MustSelectDomain(defaultJavBusDomainList), number.GetNumberID())
 	return http.NewRequest(http.MethodGet, url, nil)
 }

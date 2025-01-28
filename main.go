@@ -2,9 +2,7 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
-	"log"
 	"path/filepath"
 	"strings"
 	"yamdc/capture"
@@ -16,7 +14,7 @@ import (
 	"yamdc/face/goface"
 	"yamdc/face/pigo"
 	"yamdc/ffmpeg"
-	"yamdc/number"
+	"yamdc/model"
 	"yamdc/processor"
 	"yamdc/processor/handler"
 	"yamdc/searcher"
@@ -31,16 +29,10 @@ import (
 	_ "yamdc/searcher/plugin/register"
 )
 
-var conf = flag.String("config", "./config.json", "config file")
-
 func main() {
-	flag.Parse()
-	err := config.Init(*conf)
-	c := config.GetConfig()
-	// c, err := config.Parse(*conf)
-	if err != nil {
-		log.Fatalf("parse config failed, err:%v", err)
-	}
+
+	c := config.Shared()
+
 	logkit := logger.Init(c.LogConfig.File, c.LogConfig.Level, int(c.LogConfig.FileCount), int(c.LogConfig.FileSize), int(c.LogConfig.KeepDays), c.LogConfig.Console)
 	if err := precheckDir(c); err != nil {
 		logkit.Fatal("precheck dir failed", zap.Error(err))
@@ -103,7 +95,7 @@ func main() {
 	if err != nil {
 		logkit.Fatal("build capture runner failed", zap.Error(err))
 	}
-	logkit.Info("capture kit init success, start scraping")
+	logkit.Info("capture kit init success, start scraping------------------------------------------")
 	// 启动抓取
 	if err := cap.Run(context.Background()); err != nil {
 		logkit.Error("run capture kit failed", zap.Error(err))
@@ -112,7 +104,7 @@ func main() {
 	logkit.Info("run capture kit finish, all file scrape succ")
 }
 
-func buildCapture(c *config.Config, ss []searcher.ISearcher, catSs map[number.Category][]searcher.ISearcher, ps []processor.IProcessor) (*capture.Capture, error) {
+func buildCapture(c *config.Config, ss []searcher.ISearcher, catSs map[model.Category][]searcher.ISearcher, ps []processor.IProcessor) (*capture.Capture, error) {
 	opts := make([]capture.Option, 0, 10)
 	opts = append(opts,
 		capture.WithNamingRule(c.Naming),
@@ -125,14 +117,14 @@ func buildCapture(c *config.Config, ss []searcher.ISearcher, catSs map[number.Ca
 	return capture.New(opts...)
 }
 
-func buildCatSearcher(cplgs []config.CategoryPlugin, m map[string]interface{}) (map[number.Category][]searcher.ISearcher, error) {
-	rs := make(map[number.Category][]searcher.ISearcher, len(cplgs))
+func buildCatSearcher(cplgs []config.CategoryPlugin, m map[string]interface{}) (map[model.Category][]searcher.ISearcher, error) {
+	rs := make(map[model.Category][]searcher.ISearcher, len(cplgs))
 	for _, plg := range cplgs {
 		ss, err := buildSearcher(plg.Plugins, m)
 		if err != nil {
 			return nil, err
 		}
-		rs[number.Category(strings.ToUpper(plg.Name))] = ss
+		rs[model.Category(strings.ToUpper(plg.Name))] = ss
 	}
 	return rs, nil
 }

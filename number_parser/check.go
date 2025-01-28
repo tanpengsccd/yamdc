@@ -1,4 +1,4 @@
-package number
+package number_parser
 
 import (
 	"regexp"

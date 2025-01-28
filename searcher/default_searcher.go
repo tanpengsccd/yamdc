@@ -10,7 +10,6 @@ import (
 	"yamdc/envflag"
 	"yamdc/hasher"
 	"yamdc/model"
-	"yamdc/number"
 	"yamdc/searcher/plugin/api"
 	"yamdc/searcher/plugin/meta"
 	"yamdc/store"
@@ -101,7 +100,7 @@ func (p *DefaultSearcher) invokeHTTPRequest(ctx context.Context, req *http.Reque
 	return p.invoker(ctx, req)
 }
 
-func (p *DefaultSearcher) onRetriveData(ctx context.Context, req *http.Request, number *number.Number) ([]byte, error) {
+func (p *DefaultSearcher) onRetriveData(ctx context.Context, req *http.Request, number *model.Number) ([]byte, error) {
 	key := p.name + ":" + number.GetNumberID()
 	dataLoader := func() ([]byte, error) {
 		rsp, err := p.plg.OnHandleHTTPRequest(ctx, p.invokeHTTPRequest, req)
@@ -131,7 +130,7 @@ func (p *DefaultSearcher) onRetriveData(ctx context.Context, req *http.Request, 
 	return store.LoadData(ctx, key, defaultPageSearchCacheExpire, dataLoader)
 }
 
-func (p *DefaultSearcher) Search(ctx context.Context, number *number.Number) (*model.AvMeta, bool, error) {
+func (p *DefaultSearcher) Search(ctx context.Context, number *model.Number) (*model.AvMeta, bool, error) {
 	ctx = meta.SetNumberId(ctx, number.GetNumberID())
 	ok, err := p.plg.OnPrecheckRequest(ctx, number)
 	if err != nil {

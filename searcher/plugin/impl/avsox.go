@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 	"yamdc/model"
-	"yamdc/number"
+
 	"yamdc/searcher/decoder"
 	"yamdc/searcher/parser"
 	"yamdc/searcher/plugin/api"
@@ -27,7 +27,7 @@ type avsox struct {
 	api.DefaultPlugin
 }
 
-func (p *avsox) OnMakeHTTPRequest(ctx context.Context, number *number.Number) (*http.Request, error) {
+func (p *avsox) OnMakeHTTPRequest(ctx context.Context, number *model.Number) (*http.Request, error) {
 	return http.NewRequest(http.MethodGet, "https://avsox.click", nil) //返回一个假的request
 }
 
